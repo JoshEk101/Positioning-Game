@@ -6,9 +6,9 @@ SCREEN_WIDTH = 750
 SCREEN_HEIGHT = 600
 COLOUR = (200, 200, 200)
 COLOUR_LINE = (0, 0, 0)
-PLAYER_ONE_COLOUR = (100, 0, 0) #red
-PLAYER_TWO_COLOUR = (0, 100, 0) #green
-STONE_COLOUR = (0, 0, 100) #blue
+# PLAYER_ONE_COLOUR = (100, 0, 0) 
+PLAYER_TWO_COLOUR = (100, 0, 0) #red
+STONE_COLOUR = (100, 100, 100) #blue
 BUTTON_COLOUR = (0, 50, 100)
 
 
@@ -27,8 +27,6 @@ def check_interception(A, B, C):
     # This checks to see if the stone's coordinates lie between the players. Since we have
     # already checked that this is a straight line, if it turns out the stone's coordinates
     # lie between the two players, then we can say the path is interrupted.
-    # This program also assumes that if we have collinearity, and the stone's coordinate is the 
-    # same as a players, then the path is interrupted.
     if min(x1, x2) <= x <= max(x1, x2) and min(y1, y2) <= y <= max(y1, y2):
         return True
     else:
@@ -68,6 +66,15 @@ def createBoard():
 
     return screen
 
+def checkCollision(playerOne, playerTwo, stone):
+    if playerOne == playerTwo or playerOne == stone or playerTwo == stone:
+        return True
+    if playerOne[0] > 600 or playerOne[1] > 400 or playerOne[0] < 150 or playerOne[1] < 100:
+        return True
+    if playerTwo[0] > 600 or playerTwo[1] > 400 or playerTwo[0] < 150 or playerTwo[1] < 100:
+        return True
+    return False
+
 class Button():
     def __init__(self, x, y, image, scale):
         width = image.get_width()
@@ -96,13 +103,50 @@ class Button():
 
         return action
 
+class Player():
+    def __init__(self, x, y, image, scale):
+        width = image.get_width()
+        height = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width * 3), int(height * 3)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+
+    def draw(self):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+    def move(self, direction):
+        if direction == 'left':
+            self.rect.x -= 150
+            if checkCollision([self.rect.x, self.rect.y], playerTwoCoordinates, stoneCoordinates):
+                self.rect.x += 150
+        elif direction == 'right':
+            self.rect.x += 150
+            if checkCollision([self.rect.x, self.rect.y], playerTwoCoordinates, stoneCoordinates):
+                self.rect.x -= 150
+        elif direction == 'up':
+            self.rect.y -= 100
+            if checkCollision([self.rect.x, self.rect.y], playerTwoCoordinates, stoneCoordinates):
+                self.rect.y += 100
+        elif direction == 'down':
+            self.rect.y += 100
+            if checkCollision([self.rect.x, self.rect.y], playerTwoCoordinates, stoneCoordinates):
+                self.rect.y -= 100
+        
+    def get_image(self):
+        return (self.image)
+    
+    def get_position(self):
+        return (self.rect.topleft)
+        
+
 pygame.init()
 # note that 0, 0 is the top left of the screen
 
 screen = createBoard()
 playerOneCoordinates, playerTwoCoordinates, stoneCoordinates = startingCoordinates()
 
-playerOne = pygame.image.load("Terry.png")
+playerOne = Player(playerOneCoordinates[0], playerOneCoordinates[1], pygame.image.load("Terry.png"), 3)
+
 # playerOne = pygame.draw.circle(screen, PLAYER_ONE_COLOUR, playerOneCoordinates, 10)
 playerTwo = pygame.draw.circle(screen, PLAYER_TWO_COLOUR, playerTwoCoordinates, 10)
 #blue
@@ -112,7 +156,6 @@ title = check_interception(playerOneCoordinates, playerTwoCoordinates, stoneCoor
 pygame.display.set_caption(str(title))
 
 exit_img = pygame.image.load('exit.png').convert_alpha()
-
 exit_button = Button(150, 500, exit_img, 2)
 
 run = True
@@ -125,27 +168,17 @@ while run:
             run = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
-                playerOneCoordinates[1] += 100
+                playerOne.move('down')
             elif event.key == pygame.K_UP:
-                playerOneCoordinates[1] -= 100
+                playerOne.move('up')
             elif event.key == pygame.K_RIGHT:
-                playerOneCoordinates[0] += 150
+                playerOne.move('right')
             elif event.key == pygame.K_LEFT:
-                playerOneCoordinates[0] -= 150
+                playerOne.move('left')
             screen = createBoard()
-    # playerOne = pygame.draw.circle(screen, PLAYER_ONE_COLOUR, playerOneCoordinates, 10)
-    #red
     playerTwo = pygame.draw.circle(screen, PLAYER_TWO_COLOUR, playerTwoCoordinates, 10)
-    #blue
     playerThree = pygame.draw.circle(screen, STONE_COLOUR, stoneCoordinates, 10)
-    #green
-    width = playerOne.get_width()
-    height = playerOne.get_height()
-    playerOneImage = pygame.transform.scale(playerOne, (int(width * 3), int(height * 3)))
-    playerOneRect = playerOneImage.get_rect()
-    playerOneRect.center = (playerOneCoordinates)
-    screen.blit(playerOneImage, playerOneRect.topleft)
-    screen.blit(playerOneImage, playerOneRect.topleft)
+    screen.blit(playerOne.get_image(), playerOne.get_position())
     pygame.display.flip()
     pygame.display.update()
 
