@@ -2,6 +2,16 @@ import pygame
 import sys
 import random
 
+SCREEN_WIDTH = 750
+SCREEN_HEIGHT = 600
+COLOUR = (200, 200, 200)
+COLOUR_LINE = (0, 0, 0)
+PLAYER_ONE_COLOUR = (100, 0, 0) #red
+PLAYER_TWO_COLOUR = (0, 100, 0) #green
+STONE_COLOUR = (0, 0, 100) #blue
+BUTTON_COLOUR = (0, 50, 100)
+
+
 def check_interception(A, B, C):
     x1, y1 = A
     x2, y2 = B
@@ -24,53 +34,120 @@ def check_interception(A, B, C):
     else:
         return False
 
-def randomCoordinates():
+
+def startingCoordinates():
     playerOne = [random.choice([150, 300, 450, 600]), (random.choice([100, 200, 300, 400]))]
     playerTwo = [random.choice([150, 300, 450, 600]), random.choice([100, 200, 300, 400])]
+    while playerTwo == playerOne:
+        playerTwo = [random.choice([150, 300, 450, 600]), random.choice([100, 200, 300, 400])]
     stone = [random.choice([150, 300, 450, 600]), random.choice([100, 200, 300, 400])]
+    while stone == playerOne or stone == playerTwo:
+        stone = [random.choice([150, 300, 450, 600]), random.choice([100, 200, 300, 400])]
     return playerOne, playerTwo, stone
 
-SCREEN_WIDTH = 750
-SCREEN_HEIGHT = 500
-COLOUR = (100, 0, 100)
-COLOUR_LINE = (0, 0, 0)
-PLAYER_ONE_COLOUR = (100, 0, 0)
-PLAYER_TWO_COLOUR = (0, 100, 0)
-STONE_COLOUR = (0, 0, 100)
+def createBoard():
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen.fill(COLOUR)
+
+    # vertical lines
+    pygame.draw.line(screen, COLOUR_LINE, (150, 0), (150, 500), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (300, 0), (300, 500), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (450, 0), (450, 500), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (600, 0), (600, 500), 5)
+
+    # horizontal lines
+    pygame.draw.line(screen, COLOUR_LINE, (0, 100), (750, 100), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (0, 200), (750, 200), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (0, 300), (750, 300), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (0, 400), (750, 400), 5)
+
+    # smallfont = pygame.font.SysFont('Corbel',20) 
+    # text = smallfont.render('quit' , True , (100, 100, 100))
+    # pygame.draw.rect(screen, BUTTON_COLOUR, [50, 550, 50, 25])
+    # screen.blit(text , (55, 550))
+
+    return screen
+
+class Button():
+    def __init__(self, x, y, image, scale):
+        width = image.get_width()
+        height = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw(self):
+        action = False
+        # get mouse position
+        pos = pygame.mouse.get_pos()
+
+        # check mouse over and clicked conditions
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
+
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+
+        # draw button on screen
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
 
 pygame.init()
-
-surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-surface.fill(COLOUR)
 # note that 0, 0 is the top left of the screen
 
-# vertical lines
-pygame.draw.line(surface, COLOUR_LINE, (150, 0), (150, 500), 5)
-pygame.draw.line(surface, COLOUR_LINE, (300, 0), (300, 500), 5)
-pygame.draw.line(surface, COLOUR_LINE, (450, 0), (450, 500), 5)
-pygame.draw.line(surface, COLOUR_LINE, (600, 0), (600, 500), 5)
+screen = createBoard()
+playerOneCoordinates, playerTwoCoordinates, stoneCoordinates = startingCoordinates()
 
-# horizontal lines
-pygame.draw.line(surface, COLOUR_LINE, (0, 100), (750, 100), 5)
-pygame.draw.line(surface, COLOUR_LINE, (0, 200), (750, 200), 5)
-pygame.draw.line(surface, COLOUR_LINE, (0, 300), (750, 300), 5)
-pygame.draw.line(surface, COLOUR_LINE, (0, 400), (750, 400), 5)
-
-playerOne, playerTwo, stone = randomCoordinates()
-
-#red
-pygame.draw.circle(surface, PLAYER_ONE_COLOUR, playerOne, 10)
-#green
-pygame.draw.circle(surface, PLAYER_TWO_COLOUR, playerTwo, 10)
+playerOne = pygame.image.load("Terry.png")
+# playerOne = pygame.draw.circle(screen, PLAYER_ONE_COLOUR, playerOneCoordinates, 10)
+playerTwo = pygame.draw.circle(screen, PLAYER_TWO_COLOUR, playerTwoCoordinates, 10)
 #blue
-pygame.draw.circle(surface, STONE_COLOUR, stone, 10)
-
-title = check_interception(playerOne, playerTwo, stone)
+playerThree = pygame.draw.circle(screen, STONE_COLOUR, stoneCoordinates, 10)
+#green
+title = check_interception(playerOneCoordinates, playerTwoCoordinates, stoneCoordinates)
 pygame.display.set_caption(str(title))
 
-while True:
+exit_img = pygame.image.load('exit.png').convert_alpha()
+
+exit_button = Button(150, 500, exit_img, 2)
+
+run = True
+while run:
+    if exit_button.draw():
+        pygame.quit()
+        sys.exit()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+            run = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                playerOneCoordinates[1] += 100
+            elif event.key == pygame.K_UP:
+                playerOneCoordinates[1] -= 100
+            elif event.key == pygame.K_RIGHT:
+                playerOneCoordinates[0] += 150
+            elif event.key == pygame.K_LEFT:
+                playerOneCoordinates[0] -= 150
+            screen = createBoard()
+    # playerOne = pygame.draw.circle(screen, PLAYER_ONE_COLOUR, playerOneCoordinates, 10)
+    #red
+    playerTwo = pygame.draw.circle(screen, PLAYER_TWO_COLOUR, playerTwoCoordinates, 10)
+    #blue
+    playerThree = pygame.draw.circle(screen, STONE_COLOUR, stoneCoordinates, 10)
+    #green
+    width = playerOne.get_width()
+    height = playerOne.get_height()
+    playerOneImage = pygame.transform.scale(playerOne, (int(width * 3), int(height * 3)))
+    playerOneRect = playerOneImage.get_rect()
+    playerOneRect.center = (playerOneCoordinates)
+    screen.blit(playerOneImage, playerOneRect.topleft)
+    screen.blit(playerOneImage, playerOneRect.topleft)
+    pygame.display.flip()
     pygame.display.update()
+
+pygame.quit()
+sys.exit()
