@@ -73,6 +73,18 @@ def checkCollision(movingPlayer, stationaryPlayer, stone):
         return True
     return False
 
+class HealthIndicators():
+    def __init__(self, x, y, colour):
+        self.text = ''
+        self.colour = colour
+        self.font = pygame.font.Font('freesansbold.ttf', 30)
+        self.position = [x, y]
+        # computerHealthDisplay = font.render(str(computer.health), True, (255, 0, 0))
+
+    def draw(self, text):
+        self.text = self.font.render(text, True, self.colour)
+        screen.blit(self.text, self.position)
+
 class Button():
     def __init__(self, x, y, image, scale):
         width = image.get_width()
@@ -109,9 +121,8 @@ class Player():
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
         self.health = 100
-        self.can_fire = False
+        self.can_fire = True
         self.moves_left = 3
-        self.bullet_amount = 1
 
     def draw(self):
         screen.blit(self.image, self.image.get_rect(center = (self.rect.x, self.rect.y)))
@@ -151,6 +162,15 @@ class Player():
     def get_coordinates(self):
         return [self.rect.x, self.rect.y]
 
+    def fire(self):
+        if not check_interception([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates):
+            computer.hit()
+            print(computer.health)
+        self.can_fire = False
+    
+    def hit(self):
+        self.health -= 10
+
 class Computer():
     def __init__(self, x, y, image, scale):
         width = image.get_width()
@@ -159,14 +179,14 @@ class Computer():
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
         self.health = 100
-        self.can_fire = False
+        self.can_fire = True
         self.moves_left = 3
-        self.bullet_amount = 1
 
     def draw(self):
         screen.blit(self.image, self.image.get_rect(center = (self.rect.x, self.rect.y)))
 
     def move(self, playerOnePosition, stonePosition):
+        self.can_fire = True
         moves = ['l', 'r', 'u', 'd']
         moving = 3
         while moving > 0:
@@ -177,7 +197,7 @@ class Computer():
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
-                    moves = ['r', 'u', 'd']
+                    moves = ['r', 'u', 'd'] # remove invalid one instead of redefining
             elif next_move == 'r':
                 if not checkCollision([(self.rect.x+150), self.rect.y], playerOnePosition, stonePosition):
                     self.rect.x += 150
@@ -200,19 +220,33 @@ class Computer():
                 else:
                     moves = ['l', 'r', 'u']
             createBoard()
+            playerOneHealthIndicator.draw(str(playerOne.health))
+            computerHealthIndicator.draw(str(computer.health))
             if exit_button.draw():
                 pygame.quit()
                 sys.exit()
+            fire_button.draw()
             self.draw()
             playerOne.draw()
             pygame.draw.circle(screen, STONE_COLOUR, stonePosition, 10)
             pygame.display.update()
+            if not check_interception([self.rect.x, self.rect.y], playerOnePosition, stonePosition) and self.can_fire == True:
+                self.fire()
+                playerOneHealthIndicator.draw(str(playerOne.health))
             time.sleep(1)
         pygame.event.clear()
         playerOne.reset_moves()
+        playerOne.can_fire = True
 
     def getComputerCoordinates(self):
         return [self.rect.x, self.rect.y]
+
+    def fire(self):
+        playerOne.hit()
+        self.can_fire = False
+    
+    def hit(self):
+        self.health -= 10
 
 pygame.init()
 # note that 0, 0 is the top left of the screen
@@ -233,13 +267,25 @@ title = check_interception(playerOneCoordinates, playerTwoCoordinates, stoneCoor
 pygame.display.set_caption(str(title))
 
 exit_img = pygame.image.load('exit.png').convert_alpha()
+fire_img = pygame.image.load('fire.png').convert_alpha()
 exit_button = Button(150, 500, exit_img, 2)
+fire_button = Button(450, 500, fire_img, 2)
+
+playerOneHealthIndicator = HealthIndicators(200, 500, (0, 0, 255))
+computerHealthIndicator = HealthIndicators(200, 450, (255, 0, 0))
 
 run = True
 while run:
+    playerOneHealthIndicator.draw(str(playerOne.health))
+    computerHealthIndicator.draw(str(computer.health))
     if exit_button.draw():
         pygame.quit()
         sys.exit()
+    if fire_button.draw() and playerOne.can_fire:
+        playerOne.fire()
+        playerOneHealthIndicator.draw(str(playerOne.health))
+        screen = createBoard()
+        pygame.display.update()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
