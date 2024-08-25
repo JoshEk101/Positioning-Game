@@ -2,9 +2,14 @@ import pygame
 import sys
 import random
 import time
+import math
+from tkinter import *
+from tkinter import ttk
 
-SCREEN_WIDTH = 750
-SCREEN_HEIGHT = 600
+results = Tk()
+
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 800
 COLOUR = (200, 200, 200)
 COLOUR_LINE = (0, 0, 0)
 # PLAYER_ONE_COLOUR = (100, 0, 0) 
@@ -12,6 +17,13 @@ PLAYER_TWO_COLOUR = (100, 0, 0) #red
 STONE_COLOUR = (100, 100, 100) #blue
 BUTTON_COLOUR = (0, 50, 100)
 
+def pop_up(decision):
+    top = Toplevel(results)
+    top.geometry("100x100")
+    Label(top, text = str(decision), font= ('Mistral 18 bold')).place(x=150,y=80)
+    time.sleep(3)
+    pygame.quit()
+    sys.exit()
 
 def check_interception(A, B, C):
     x1, y1 = A
@@ -33,11 +45,17 @@ def check_interception(A, B, C):
     else:
         return False
 
+def checkDistance(objectOne, objectTwo):
+    result = math.sqrt((objectTwo[0] - objectOne[0]) ** 2 + (objectTwo[1] - objectOne[1]) ** 2)
+    if result > 200:
+        return False
+    return True
+
 def startingCoordinates():
-    playerOne = [random.choice([150, 300, 450, 600]), (random.choice([100, 200, 300, 400]))]
-    playerTwo = [random.choice([150, 300, 450, 600]), random.choice([100, 200, 300, 400])]
+    playerOne = [random.choice([150, 300, 450, 600, 750, 900]), (random.choice([100, 200, 300, 400, 500, 600]))]
+    playerTwo = [random.choice([150, 300, 450, 600, 750, 900]), random.choice([100, 200, 300, 400, 500, 600])]
     while playerTwo == playerOne:
-        playerTwo = [random.choice([150, 300, 450, 600]), random.choice([100, 200, 300, 400])]
+        playerTwo = [random.choice([150, 300, 450, 600, 750, 900]), random.choice([100, 200, 300, 400, 500, 600])]
     stone = [random.choice([300, 450]), random.choice([200, 300])]
     while stone == playerOne or stone == playerTwo:
         stone = [random.choice([300, 450]), random.choice([200, 300])]
@@ -48,16 +66,20 @@ def createBoard():
     screen.fill(COLOUR)
 
     # vertical lines
-    pygame.draw.line(screen, COLOUR_LINE, (150, 0), (150, 400), 5)
-    pygame.draw.line(screen, COLOUR_LINE, (300, 0), (300, 400), 5)
-    pygame.draw.line(screen, COLOUR_LINE, (450, 0), (450, 400), 5)
-    pygame.draw.line(screen, COLOUR_LINE, (600, 0), (600, 400), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (150, 100), (150, 600), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (300, 100), (300, 600), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (450, 100), (450, 600), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (600, 100), (600, 600), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (750, 100), (750, 600), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (900, 100), (900, 600), 5)
 
     # horizontal lines
-    pygame.draw.line(screen, COLOUR_LINE, (0, 100), (750, 100), 5)
-    pygame.draw.line(screen, COLOUR_LINE, (0, 200), (750, 200), 5)
-    pygame.draw.line(screen, COLOUR_LINE, (0, 300), (750, 300), 5)
-    pygame.draw.line(screen, COLOUR_LINE, (0, 400), (750, 400), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (150, 100), (900, 100), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (150, 200), (900, 200), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (150, 300), (900, 300), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (150, 400), (900, 400), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (150, 500), (900, 500), 5)
+    pygame.draw.line(screen, COLOUR_LINE, (150, 600), (900, 600), 5)
 
     # smallfont = pygame.font.SysFont('Corbel',20) 
     # text = smallfont.render('quit' , True , (100, 100, 100))
@@ -69,10 +91,18 @@ def createBoard():
 def checkCollision(movingPlayer, stationaryPlayer, stone):
     if movingPlayer == stationaryPlayer or movingPlayer == stone or stationaryPlayer == stone:
         return True
-    if movingPlayer[0] > 600 or movingPlayer[1] > 400 or movingPlayer[0] < 150 or movingPlayer[1] < 100:
+    if movingPlayer[0] > 900 or movingPlayer[1] > 600 or movingPlayer[0] < 150 or movingPlayer[1] < 100:
         return True
     return False
 
+# showRadius(playerOne.get_coordinates())
+# def showRadius(coordinates):
+#     pygame.draw.circle(screen, (255, 0, 0), coordinates, 100)
+#     playerOne.draw()
+#     pygame.display.update()
+#     time.sleep(3)
+#     createBoard()
+    
 class HealthIndicators():
     def __init__(self, x, y, colour):
         self.text = ''
@@ -98,12 +128,12 @@ class Button():
         action = False
         # get mouse position
         pos = pygame.mouse.get_pos()
-
         # check mouse over and clicked conditions
         if self.rect.collidepoint(pos):
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
                 self.clicked = True
                 action = True
+            # showRadius(playerOne.get_coordinates())
 
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
@@ -112,6 +142,9 @@ class Button():
         screen.blit(self.image, (self.rect.x, self.rect.y))
 
         return action
+    
+    def get_image_pos(self):
+        return self.rect
 
 class Player():
     def __init__(self, x, y, image, scale):
@@ -163,9 +196,11 @@ class Player():
         return [self.rect.x, self.rect.y]
 
     def fire(self):
-        if not check_interception([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates):
+        if not check_interception([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates) and checkDistance([self.rect.x, self.rect.y], computer.getComputerCoordinates()):
             computer.hit()
             print(computer.health)
+        if computer.health < 10:
+            pop_up("You Win!")
         self.can_fire = False
     
     def hit(self):
@@ -231,7 +266,7 @@ class Computer():
             pygame.draw.circle(screen, STONE_COLOUR, stonePosition, 10)
             pygame.display.update()
             if not check_interception([self.rect.x, self.rect.y], playerOnePosition, stonePosition) and self.can_fire == True:
-                self.fire()
+                self.fire(playerOnePosition)
                 playerOneHealthIndicator.draw(str(playerOne.health))
             time.sleep(1)
         pygame.event.clear()
@@ -241,8 +276,11 @@ class Computer():
     def getComputerCoordinates(self):
         return [self.rect.x, self.rect.y]
 
-    def fire(self):
-        playerOne.hit()
+    def fire(self, playerOnePosition):
+        if checkDistance([self.rect.x, self.rect.y], playerOnePosition):
+            playerOne.hit()
+        if playerOne.health < 10:
+            pop_up("You Lose!")
         self.can_fire = False
     
     def hit(self):
@@ -276,6 +314,7 @@ computerHealthIndicator = HealthIndicators(200, 450, (255, 0, 0))
 
 run = True
 while run:
+    hovered = False
     playerOneHealthIndicator.draw(str(playerOne.health))
     computerHealthIndicator.draw(str(computer.health))
     if exit_button.draw():
