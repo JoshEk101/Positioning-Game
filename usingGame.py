@@ -4,7 +4,7 @@ import random
 import time
 import math
 from tkinter import *
-from tkinter import ttk
+from tkinter import messagebox
 
 results = Tk()
 
@@ -16,14 +16,6 @@ COLOUR_LINE = (0, 0, 0)
 PLAYER_TWO_COLOUR = (100, 0, 0) #red
 STONE_COLOUR = (100, 100, 100) #blue
 BUTTON_COLOUR = (0, 50, 100)
-
-def pop_up(decision):
-    top = Toplevel(results)
-    top.geometry("100x100")
-    Label(top, text = str(decision), font= ('Mistral 18 bold')).place(x=150,y=80)
-    time.sleep(3)
-    pygame.quit()
-    sys.exit()
 
 def check_interception(A, B, C):
     x1, y1 = A
@@ -198,9 +190,11 @@ class Player():
     def fire(self):
         if not check_interception([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates) and checkDistance([self.rect.x, self.rect.y], computer.getComputerCoordinates()):
             computer.hit()
-            print(computer.health)
         if computer.health < 10:
-            pop_up("You Win!")
+            messagebox.showinfo(title = 'Winner!', message = 'You Win!')
+            time.sleep(3)
+            pygame.quit()
+            sys.exit()
         self.can_fire = False
     
     def hit(self):
@@ -232,28 +226,28 @@ class Computer():
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
-                    moves = ['r', 'u', 'd'] # remove invalid one instead of redefining
+                    moves.remove('l') 
             elif next_move == 'r':
                 if not checkCollision([(self.rect.x+150), self.rect.y], playerOnePosition, stonePosition):
                     self.rect.x += 150
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
-                    moves = ['l', 'u', 'd']
+                    moves.remove('r')
             elif next_move == 'u':
                 if not checkCollision([self.rect.x, (self.rect.y-100)], playerOnePosition, stonePosition):
                     self.rect.y -= 100
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
-                    moves = ['l', 'r', 'd']
+                    moves.remove('u')
             elif next_move == 'd':
                 if not checkCollision([self.rect.x, (self.rect.y+100)], playerOnePosition, stonePosition):
                     self.rect.y += 100
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
-                    moves = ['l', 'r', 'u']
+                    moves.remove('d')
             createBoard()
             playerOneHealthIndicator.draw(str(playerOne.health))
             computerHealthIndicator.draw(str(computer.health))
@@ -280,7 +274,10 @@ class Computer():
         if checkDistance([self.rect.x, self.rect.y], playerOnePosition):
             playerOne.hit()
         if playerOne.health < 10:
-            pop_up("You Lose!")
+            messagebox.showinfo(title = 'Lost!', message = 'You Lose!')
+            time.sleep(3)
+            pygame.quit()
+            sys.exit()
         self.can_fire = False
     
     def hit(self):
@@ -306,11 +303,11 @@ pygame.display.set_caption(str(title))
 
 exit_img = pygame.image.load('exit.png').convert_alpha()
 fire_img = pygame.image.load('fire.png').convert_alpha()
-exit_button = Button(150, 500, exit_img, 2)
-fire_button = Button(450, 500, fire_img, 2)
+exit_button = Button(350, 635, exit_img, 2)
+fire_button = Button(650, 635, fire_img, 2)
 
-playerOneHealthIndicator = HealthIndicators(200, 500, (0, 0, 255))
-computerHealthIndicator = HealthIndicators(200, 450, (255, 0, 0))
+playerOneHealthIndicator = HealthIndicators(200, 700, (0, 0, 255))
+computerHealthIndicator = HealthIndicators(200, 650, (255, 0, 0))
 
 run = True
 while run:
@@ -329,7 +326,6 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN and playerOne.get_moves() > 0:
-            print("doing")
             if event.key == pygame.K_DOWN:
                 playerOne.move('down')
             elif event.key == pygame.K_UP:
