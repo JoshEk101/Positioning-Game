@@ -3,10 +3,7 @@ import sys
 import random
 import time
 import math
-from tkinter import *
 from tkinter import messagebox
-
-results = Tk()
 
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 800
@@ -39,7 +36,7 @@ def check_interception(A, B, C):
 
 def checkDistance(objectOne, objectTwo):
     result = math.sqrt((objectTwo[0] - objectOne[0]) ** 2 + (objectTwo[1] - objectOne[1]) ** 2)
-    if result > 200:
+    if result > 150:
         return False
     return True
 
@@ -51,7 +48,10 @@ def startingCoordinates():
     stone = [random.choice([300, 450]), random.choice([200, 300])]
     while stone == playerOne or stone == playerTwo:
         stone = [random.choice([300, 450]), random.choice([200, 300])]
-    return playerOne, playerTwo, stone
+    stoneTwo = [random.choice([600, 750]), random.choice([400, 500])]
+    while stoneTwo == playerOne or stoneTwo == playerTwo or stone == stoneTwo:
+        stoneTwo = [random.choice([600, 750]), random.choice([400, 500])]
+    return playerOne, playerTwo, stone, stoneTwo
 
 def createBoard():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -80,22 +80,22 @@ def createBoard():
 
     return screen
 
-def checkCollision(movingPlayer, stationaryPlayer, stone):
-    if movingPlayer == stationaryPlayer or movingPlayer == stone or stationaryPlayer == stone:
+def checkCollision(movingPlayer, stationaryPlayer, stone, stoneTwo):
+    if movingPlayer == stationaryPlayer or movingPlayer == stone or movingPlayer == stoneTwo:
         return True
     if movingPlayer[0] > 900 or movingPlayer[1] > 600 or movingPlayer[0] < 150 or movingPlayer[1] < 100:
         return True
     return False
 
 # showRadius(playerOne.get_coordinates())
-# def showRadius(coordinates):
-#     pygame.draw.circle(screen, (255, 0, 0), coordinates, 100)
-#     playerOne.draw()
-#     pygame.display.update()
-#     time.sleep(3)
-#     createBoard()
+def showRadius(coordinates):
+    pygame.draw.circle(screen, (255, 0, 0), coordinates, 150)
+    playerOne.draw()
+    pygame.display.update()
+    time.sleep(3)
+    createBoard()
     
-class HealthIndicators():
+class displayText():
     def __init__(self, x, y, colour):
         self.text = ''
         self.colour = colour
@@ -155,25 +155,25 @@ class Player():
     def move(self, direction):
         if direction == 'left':
             self.rect.x -= 150
-            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates):
+            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates, stoneTwoCoordinates):
                 self.rect.x += 150
             elif self.moves_left > 0:
-                self.moves_left -= 1
+                self.moves_left -= 1 
         elif direction == 'right':
             self.rect.x += 150
-            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates):
+            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates, stoneTwoCoordinates):
                 self.rect.x -= 150
             elif self.moves_left > 0:
                 self.moves_left -= 1
         elif direction == 'up':
             self.rect.y -= 100
-            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates):
+            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates, stoneTwoCoordinates):
                 self.rect.y += 100
             elif self.moves_left > 0:
                 self.moves_left -= 1
         elif direction == 'down':
             self.rect.y += 100
-            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates):
+            if checkCollision([self.rect.x, self.rect.y], computer.getComputerCoordinates(), stoneCoordinates, stoneTwoCoordinates):
                 self.rect.y -= 100
             elif self.moves_left > 0:
                 self.moves_left -= 1
@@ -215,34 +215,35 @@ class Computer():
         screen.blit(self.image, self.image.get_rect(center = (self.rect.x, self.rect.y)))
 
     def move(self, playerOnePosition, stonePosition):
+        print(stoneTwoCoordinates)
         self.can_fire = True
         moves = ['l', 'r', 'u', 'd']
         moving = 3
         while moving > 0:
             next_move = random.choice(moves)
             if next_move == 'l':
-                if not checkCollision([(self.rect.x-150), self.rect.y], playerOnePosition, stonePosition):
+                if not checkCollision([(self.rect.x-150), self.rect.y], playerOnePosition, stonePosition, stoneTwoCoordinates):
                     self.rect.x -= 150
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
                     moves.remove('l') 
             elif next_move == 'r':
-                if not checkCollision([(self.rect.x+150), self.rect.y], playerOnePosition, stonePosition):
+                if not checkCollision([(self.rect.x+150), self.rect.y], playerOnePosition, stonePosition, stoneTwoCoordinates):
                     self.rect.x += 150
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
                     moves.remove('r')
             elif next_move == 'u':
-                if not checkCollision([self.rect.x, (self.rect.y-100)], playerOnePosition, stonePosition):
+                if not checkCollision([self.rect.x, (self.rect.y-100)], playerOnePosition, stonePosition, stoneTwoCoordinates):
                     self.rect.y -= 100
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
                 else:
                     moves.remove('u')
             elif next_move == 'd':
-                if not checkCollision([self.rect.x, (self.rect.y+100)], playerOnePosition, stonePosition):
+                if not checkCollision([self.rect.x, (self.rect.y+100)], playerOnePosition, stonePosition, stoneTwoCoordinates):
                     self.rect.y += 100
                     moving -= 1
                     moves = ['l', 'r', 'u', 'd']
@@ -258,6 +259,7 @@ class Computer():
             self.draw()
             playerOne.draw()
             pygame.draw.circle(screen, STONE_COLOUR, stonePosition, 10)
+            pygame.draw.circle(screen, STONE_COLOUR, stoneTwoCoordinates, 10)
             pygame.display.update()
             if not check_interception([self.rect.x, self.rect.y], playerOnePosition, stonePosition) and self.can_fire == True:
                 self.fire(playerOnePosition)
@@ -287,7 +289,7 @@ pygame.init()
 # note that 0, 0 is the top left of the screen
 
 screen = createBoard()
-playerOneCoordinates, playerTwoCoordinates, stoneCoordinates = startingCoordinates()
+playerOneCoordinates, playerTwoCoordinates, stoneCoordinates, stoneTwoCoordinates = startingCoordinates()
 
 playerOne = Player(playerOneCoordinates[0], playerOneCoordinates[1], pygame.image.load("Terry.png"), 3)
 
@@ -297,23 +299,33 @@ computer = Computer(playerTwoCoordinates[0], playerTwoCoordinates[1], pygame.ima
 
 #blue
 stone = pygame.draw.circle(screen, STONE_COLOUR, stoneCoordinates, 10)
+stoneTwo = pygame.draw.circle(screen, STONE_COLOUR, stoneTwoCoordinates, 10)
 #green
 title = check_interception(playerOneCoordinates, playerTwoCoordinates, stoneCoordinates)
 pygame.display.set_caption(str(title))
 
 exit_img = pygame.image.load('exit.png').convert_alpha()
 fire_img = pygame.image.load('fire.png').convert_alpha()
+distance_img = pygame.image.load('Distance.png').convert_alpha()
 exit_button = Button(350, 635, exit_img, 2)
 fire_button = Button(650, 635, fire_img, 2)
+distance_button = Button(475, 20, distance_img, 2)
 
-playerOneHealthIndicator = HealthIndicators(200, 700, (0, 0, 255))
-computerHealthIndicator = HealthIndicators(200, 650, (255, 0, 0))
+playerOneHealthIndicator = displayText(200, 700, (0, 0, 255))
+computerHealthIndicator = displayText(200, 650, (255, 0, 0))
+movesLeft = displayText(400, 720, (0, 0, 0))
+shotsLeft = displayText(600, 720, (0, 0, 0))
 
 run = True
 while run:
     hovered = False
     playerOneHealthIndicator.draw(str(playerOne.health))
     computerHealthIndicator.draw(str(computer.health))
+    movesLeft.draw(str(playerOne.moves_left))
+    if playerOne.can_fire:
+        shotsLeft.draw("1")
+    else:
+        shotsLeft.draw("0")
     if exit_button.draw():
         pygame.quit()
         sys.exit()
@@ -322,6 +334,8 @@ while run:
         playerOneHealthIndicator.draw(str(playerOne.health))
         screen = createBoard()
         pygame.display.update()
+    if distance_button.draw():
+        showRadius(playerOne.get_coordinates())
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -337,6 +351,7 @@ while run:
             screen = createBoard()
     computer.draw()
     stone = pygame.draw.circle(screen, STONE_COLOUR, stoneCoordinates, 10)
+    stoneTwo = pygame.draw.circle(screen, STONE_COLOUR, stoneTwoCoordinates, 10)
     playerOne.draw()
     if playerOne.get_moves() == 0:
         computer.move(playerOne.get_coordinates(), stoneCoordinates)
