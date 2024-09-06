@@ -87,7 +87,6 @@ def checkCollision(movingPlayer, stationaryPlayer, stone, stoneTwo):
         return True
     return False
 
-# showRadius(playerOne.get_coordinates())
 def showRadius(coordinates):
     pygame.draw.circle(screen, (255, 0, 0), coordinates, 150)
     playerOne.draw()
@@ -101,7 +100,6 @@ class displayText():
         self.colour = colour
         self.font = pygame.font.Font('freesansbold.ttf', 30)
         self.position = [x, y]
-        # computerHealthDisplay = font.render(str(computer.health), True, (255, 0, 0))
 
     def draw(self, text):
         self.text = self.font.render(text, True, self.colour)
@@ -125,7 +123,6 @@ class Button():
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
                 self.clicked = True
                 action = True
-            # showRadius(playerOne.get_coordinates())
 
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
@@ -215,7 +212,6 @@ class Computer():
         screen.blit(self.image, self.image.get_rect(center = (self.rect.x, self.rect.y)))
 
     def move(self, playerOnePosition, stonePosition):
-        print(stoneTwoCoordinates)
         self.can_fire = True
         moves = ['l', 'r', 'u', 'd']
         moving = 3
@@ -261,10 +257,11 @@ class Computer():
             pygame.draw.circle(screen, STONE_COLOUR, stonePosition, 10)
             pygame.draw.circle(screen, STONE_COLOUR, stoneTwoCoordinates, 10)
             pygame.display.update()
-            if not check_interception([self.rect.x, self.rect.y], playerOnePosition, stonePosition) and self.can_fire == True:
+            if not check_interception([self.rect.x, self.rect.y], playerOnePosition, stonePosition) and self.can_fire == True and checkDistance([self.rect.x, self.rect.y], playerOnePosition):
                 self.fire(playerOnePosition)
                 playerOneHealthIndicator.draw(str(playerOne.health))
             time.sleep(1)
+        createBoard()
         pygame.event.clear()
         playerOne.reset_moves()
         playerOne.can_fire = True
@@ -315,6 +312,8 @@ playerOneHealthIndicator = displayText(200, 700, (0, 0, 255))
 computerHealthIndicator = displayText(200, 650, (255, 0, 0))
 movesLeft = displayText(400, 720, (0, 0, 0))
 shotsLeft = displayText(600, 720, (0, 0, 0))
+
+# missedMessage = displayText(200, 200, (0, 0, 0))
 
 run = True
 while run:
